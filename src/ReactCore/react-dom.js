@@ -27,6 +27,8 @@ function createDom(vdom) {
   if (type === REACT_TEXT) {
     // 文本节点
     dom = document.createTextNode(props.content);
+  } else if (typeof type === "function") {
+    return mountFunctionComponent(vdom);
   } else {
     dom = document.createElement(type); // div span p
   }
@@ -48,6 +50,14 @@ function createDom(vdom) {
   return dom;
 }
 
+function mountFunctionComponent(vdom) {
+  let { type, props } = vdom;
+  let renderVdom = type(props);
+  vdom.oldRenderVdom = renderVdom; // 记录上一次函数返回值
+  return createDom(renderVdom);
+}
+
+// 递归孩子
 function reconcileChildren(childrenVdom, parentDom) {
   childrenVdom.forEach((childVdom) => mount(childVdom, parentDom));
 }

@@ -11,4 +11,15 @@ let element = React.createElement("h1", {
 
 console.log(JSON.stringify(element, null, 2))
 
-ReactDom.render(element, window.root)
+
+function Fn1(props) {
+  return <h1>{props.title}  世界 ！</h1>
+}
+
+function Fn() {
+  return <Fn1 title="你好" />
+}
+
+let element2 = React.createElement(Fn, { title: '标题' })
+
+ReactDom.render(element2, window.root)
