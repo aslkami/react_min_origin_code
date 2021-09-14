@@ -1,4 +1,5 @@
 import React from './ReactCore/react'
+import ReactDom from './ReactCore/react-dom'
 
 let element = React.createElement("h1", {
   className: "title",
@@ -9,3 +10,5 @@ let element = React.createElement("h1", {
 
 
 console.log(JSON.stringify(element, null, 2))
+
+ReactDom.render(element, window.root)
