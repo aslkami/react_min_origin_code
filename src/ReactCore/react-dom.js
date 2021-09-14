@@ -28,7 +28,11 @@ function createDom(vdom) {
     // 文本节点
     dom = document.createTextNode(props.content);
   } else if (typeof type === "function") {
-    return mountFunctionComponent(vdom);
+    if (type.isReactComponent) {
+      return mountClassComponent(vdom);
+    } else {
+      return mountFunctionComponent(vdom);
+    }
   } else {
     dom = document.createElement(type); // div span p
   }
@@ -48,6 +52,14 @@ function createDom(vdom) {
   }
 
   return dom;
+}
+
+function mountClassComponent(vdom) {
+  let { type: ClassComponent, props } = vdom;
+  let classInstance = new ClassComponent(props);
+  let renderVdom = classInstance.render();
+  vdom.oldRenderVdom = renderVdom; // 记录上一次函数返回值
+  return createDom(renderVdom);
 }
 
 function mountFunctionComponent(vdom) {
