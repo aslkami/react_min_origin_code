@@ -1,5 +1,17 @@
 import { createDom, findDom, compateTwoVdom } from "./react-dom";
 
+export let updateQuene = {
+  isBatchingUpdate: false, // 默认 非批量 同步的
+  updaters: [], // Updater 数组
+  batchUpdate() {
+    for (let updater of updateQuene.updaters) {
+      updater.updateComponent();
+    }
+    updateQuene.updaters.length = 0;
+    updateQuene.updaters.isBatchingUpdate = false;
+  },
+};
+
 class Updater {
   constructor(classInstance) {
     this.classInstance = classInstance;
@@ -13,7 +25,13 @@ class Updater {
   }
 
   emitUpdate() {
-    this.updateComponent();
+    if (updateQuene.isBatchingUpdate) {
+      // 批量异步更新
+      updateQuene.updaters.push(this);
+    } else {
+      // 同步更新
+      this.updateComponent();
+    }
   }
 
   updateComponent() {
@@ -27,6 +45,9 @@ class Updater {
     const { classInstance, pendingStates } = this;
     let { state } = classInstance;
     pendingStates.forEach((particialState) => {
+      if (typeof particialState === "function") {
+        particialState = particialState(state);
+      }
       state = { ...state, ...particialState };
     });
     pendingStates.length = 0;

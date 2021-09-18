@@ -1,4 +1,5 @@
 import { REACT_TEXT } from "./constants";
+import { addEvent } from "./event";
 /**
  * 把 虚拟 dom 变成 真实 dom 插入 容器
  * @param {*} vdom 虚拟 dom
@@ -52,13 +53,6 @@ export function createDom(vdom) {
   }
 
   vdom.dom = dom; // 让 虚拟 dom 记录真实 dom
-  console.log(
-    `vdom: ${JSON.stringify(vdom, null, 2)}, dom: ${JSON.stringify(
-      dom,
-      null,
-      2
-    )}`
-  );
   return dom;
 }
 
@@ -98,7 +92,9 @@ function updateProps(dom, oldProps, newProps) {
         dom.style[attr] = styleObj[attr];
       }
     } else if (key.startsWith("on")) {
-      dom[key.toLocaleLowerCase()] = newProps[key];
+      // dom[key.toLocaleLowerCase()] = newProps[key];
+      debugger;
+      addEvent(dom, key.toLocaleLowerCase(), newProps[key]);
     } else {
       dom[key] = newProps[key];
     }

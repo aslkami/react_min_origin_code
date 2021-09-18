@@ -11,7 +11,18 @@ export default class StateClass extends React.Component {
   }
 
   setCount = () => {
-    this.setState({ count: this.state.count + 1 })
+    debugger
+    this.setState((state) => ({ count: state.count + 1 }))
+    console.log(this.state.count);
+    this.setState((state) => ({ count: state.count + 1 }))
+    console.log(this.state.count);
+
+    setTimeout(() => {
+      this.setState((state) => ({ count: state.count + 1 }))
+      console.log(this.state.count);
+      this.setState((state) => ({ count: state.count + 1 }))
+      console.log(this.state.count);
+    })
   }
 
   render() {
