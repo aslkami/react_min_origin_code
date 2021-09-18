@@ -19,7 +19,7 @@ function mount(vdom, parentDom) {
 /**
  * 把虚拟 dom 变成 真实 dom
  */
-function createDom(vdom) {
+export function createDom(vdom) {
   if (!vdom) return null;
   let { type, props } = vdom;
   let dom; // 真实 dom
@@ -51,6 +51,14 @@ function createDom(vdom) {
     }
   }
 
+  vdom.dom = dom; // 让 虚拟 dom 记录真实 dom
+  console.log(
+    `vdom: ${JSON.stringify(vdom, null, 2)}, dom: ${JSON.stringify(
+      dom,
+      null,
+      2
+    )}`
+  );
   return dom;
 }
 
@@ -58,7 +66,7 @@ function mountClassComponent(vdom) {
   let { type: ClassComponent, props } = vdom;
   let classInstance = new ClassComponent(props);
   let renderVdom = classInstance.render();
-  vdom.oldRenderVdom = renderVdom; // 记录上一次函数返回值
+  classInstance.oldRenderVdom = vdom.oldRenderVdom = renderVdom; // 记录上一次函数返回值
   return createDom(renderVdom);
 }
 
@@ -89,10 +97,28 @@ function updateProps(dom, oldProps, newProps) {
       for (let attr in styleObj) {
         dom.style[attr] = styleObj[attr];
       }
+    } else if (key.startsWith("on")) {
+      dom[key.toLocaleLowerCase()] = newProps[key];
     } else {
       dom[key] = newProps[key];
     }
   }
+}
+
+export function findDom(vdom) {
+  if (!vdom) return null;
+  if (vdom.dom) {
+    return vdom.dom;
+  } else {
+    // 函数 类组件没有 真实 dom 但是有虚拟 oldRenderVdom
+    return findDom(vdom);
+  }
+}
+
+export function compateTwoVdom(parentDom, oldVDom, newVdom) {
+  let oldDom = findDom(oldVDom); // 获取 oldRenderVdom 对应的 真实 dom
+  let newDom = createDom(newVdom); // 创建 新的 dom
+  parentDom.replaceChild(newDom, oldDom);
 }
 
 const ReactDom = {

@@ -1,41 +1,37 @@
 import React from './ReactCore/react'
 import ReactDom from './ReactCore/react-dom'
 
-// let element = React.createElement("h1", {
-//   className: "title",
-//   style: {
-//     color: 'red'
-//   }
-// }, "hello", React.createElement("span", null, "world"))
 
-
-// console.log(JSON.stringify(element, null, 2))
-
-
-function Fn1(props) {
-  return <h1>{props.title}  世界 ！</h1>
-}
-
-// function Fn() {
-//   return <Fn1 title="你好" />
-// }
-
-// let element2 = React.createElement(Fn, { title: '标题' })
-
-class Fate extends React.Component {
+export default class StateClass extends React.Component {
   constructor(props) {
     super(props)
+    this.state = {
+      count: 0
+    }
   }
+
+  setCount = () => {
+    this.setState({ count: this.state.count + 1 })
+  }
+
   render() {
     return (
       <div>
-        <h1>{this.props.title}</h1>
-        <Fn1 title="Saber"/>
+        <Fn1 title={this.props.title}/>
+        <p>count: {this.state.count}</p>
+        <button onClick={this.setCount}>加加</button>
       </div>
     )
   }
 }
 
-let element3 = React.createElement(Fate, { title: '命运之夜' })
+function Fn1(props) {
+  return <Fn2 title={props.title}/>
+}
 
-ReactDom.render(element3, window.root)
+function Fn2(props) {
+  return <p>标题: {props.title } </p>
+}
+
+const App = <StateClass title="命运之夜"></StateClass>
+ReactDom.render(App, window.root)
