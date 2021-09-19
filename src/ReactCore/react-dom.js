@@ -22,7 +22,7 @@ function mount(vdom, parentDom) {
  */
 export function createDom(vdom) {
   if (!vdom) return null;
-  let { type, props } = vdom;
+  let { type, props, ref } = vdom;
   let dom; // 真实 dom
 
   if (type === REACT_TEXT) {
@@ -53,6 +53,9 @@ export function createDom(vdom) {
   }
 
   vdom.dom = dom; // 让 虚拟 dom 记录真实 dom
+  if (ref) {
+    ref.current = dom;
+  }
   return dom;
 }
 
@@ -93,7 +96,6 @@ function updateProps(dom, oldProps, newProps) {
       }
     } else if (key.startsWith("on")) {
       // dom[key.toLocaleLowerCase()] = newProps[key];
-      debugger;
       addEvent(dom, key.toLocaleLowerCase(), newProps[key]);
     } else {
       dom[key] = newProps[key];

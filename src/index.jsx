@@ -2,35 +2,27 @@ import React from './ReactCore/react'
 import ReactDom from './ReactCore/react-dom'
 
 
-export default class StateClass extends React.Component {
+export default class RefClass extends React.Component {
   constructor(props) {
     super(props)
-    this.state = {
-      count: 0
-    }
+    this.aRef = React.createRef()
+    this.bRef = React.createRef()
+    this.rRef = React.createRef()
   }
 
-  setCount = () => {
-    debugger
-    this.setState((state) => ({ count: state.count + 1 }))
-    console.log(this.state.count);
-    this.setState((state) => ({ count: state.count + 1 }))
-    console.log(this.state.count);
-
-    setTimeout(() => {
-      this.setState((state) => ({ count: state.count + 1 }))
-      console.log(this.state.count);
-      this.setState((state) => ({ count: state.count + 1 }))
-      console.log(this.state.count);
-    })
+  handleAdd = () => {
+    const a = this.aRef.current.value
+    const b = this.bRef.current.value
+    this.rRef.current.value = a + b
   }
 
   render() {
     return (
       <div>
-        <Fn1 title={this.props.title}/>
-        <p>count: {this.state.count}</p>
-        <button onClick={this.setCount}>加加</button>
+        <input ref={this.aRef} />+
+        <input ref={this.bRef}/>
+        <button onClick={this.handleAdd}>=</button>
+        <input ref={this.rRef}/>
       </div>
     )
   }
@@ -44,5 +36,5 @@ function Fn2(props) {
   return <p>标题: {props.title } </p>
 }
 
-const App = <StateClass title="命运之夜"></StateClass>
+const App = <RefClass title="命运之夜"></RefClass>
 ReactDom.render(App, window.root)

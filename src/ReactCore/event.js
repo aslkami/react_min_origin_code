@@ -25,7 +25,6 @@ export function addEvent(dom, eventType, eventHandler) {
 // 原生的事件对象， 不同浏览器 事件对象可能不一样
 // 在合成事件的处理函数里， 状态的更新是 批量的
 function dispatchEvent(event) {
-  debugger;
   let { target, type } = event; // 例如 target => button, type => click
   let eventType = "on" + type;
 
