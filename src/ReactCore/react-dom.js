@@ -60,8 +60,11 @@ export function createDom(vdom) {
 }
 
 function mountClassComponent(vdom) {
-  let { type: ClassComponent, props } = vdom;
+  let { type: ClassComponent, props, ref } = vdom;
   let classInstance = new ClassComponent(props);
+  if (ref) {
+    ref.current = classInstance;
+  }
   let renderVdom = classInstance.render();
   classInstance.oldRenderVdom = vdom.oldRenderVdom = renderVdom; // 记录上一次函数返回值
   return createDom(renderVdom);
