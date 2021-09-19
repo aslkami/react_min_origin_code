@@ -14,6 +14,9 @@ function mount(vdom, parentDom) {
   // newDom 可能是 null
   if (newDom) {
     parentDom.appendChild(newDom);
+    if (newDom._componentDidMount) {
+      newDom._componentDidMount();
+    }
   }
 }
 
@@ -24,7 +27,7 @@ export function createDom(vdom) {
   if (!vdom) return null;
   let { type, props, ref } = vdom;
   let dom; // 真实 dom
-  console.log(vdom);
+
   if (type && type.$$type === REACT_FORWARD_REF) {
     return mountForwardComponent(vdom);
   } else if (type === REACT_TEXT) {
@@ -74,9 +77,17 @@ function mountClassComponent(vdom) {
   if (ref) {
     ref.current = classInstance;
   }
+  if (classInstance.componentWillMount) {
+    classInstance.componentWillMount();
+  }
   let renderVdom = classInstance.render();
   classInstance.oldRenderVdom = vdom.oldRenderVdom = renderVdom; // 记录上一次函数返回值
-  return createDom(renderVdom);
+  const dom = createDom(renderVdom);
+  if (classInstance.componentDidMount) {
+    dom._componentDidMount =
+      classInstance.componentDidMount.bind(classInstance);
+  }
+  return dom;
 }
 
 function mountFunctionComponent(vdom) {

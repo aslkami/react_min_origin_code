@@ -48,7 +48,7 @@ function dispatchEvent(event) {
 }
 
 function createSyntheticEvent(nativeEvent) {
-  let syntheticEvent = {};
+  let syntheticEvent = { nativeEvent };
   for (let key in nativeEvent) {
     syntheticEvent[key] = nativeEvent[key];
   }

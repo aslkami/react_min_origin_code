@@ -24,7 +24,8 @@ class Updater {
     this.emitUpdate(); // 触发更新
   }
 
-  emitUpdate() {
+  emitUpdate(nextProps) {
+    this.nextProps = nextProps;
     if (updateQuene.isBatchingUpdate) {
       // 批量异步更新
       updateQuene.updaters.push(this);
@@ -35,9 +36,9 @@ class Updater {
   }
 
   updateComponent() {
-    const { classInstance, pendingStates } = this;
-    if (pendingStates.length > 0) {
-      shouldUpdate(classInstance, this.getState());
+    const { classInstance, pendingStates, nextProps } = this;
+    if (nextProps || pendingStates.length > 0) {
+      shouldUpdate(classInstance, nextProps, this.getState());
     }
   }
 
@@ -55,9 +56,25 @@ class Updater {
   }
 }
 
-function shouldUpdate(classInstance, nextState) {
+function shouldUpdate(classInstance, nextProps, nextState) {
+  let willUpdate = true; // 组件是否需要更新
+  const { shouldComponentUpdate, componentWillUpdate } = classInstance;
+
+  if (shouldComponentUpdate && !shouldComponentUpdate(nextProps, nextState)) {
+    willUpdate = false;
+  }
+
+  if (willUpdate && componentWillUpdate) {
+    componentWillUpdate();
+  }
+
+  if (nextProps) {
+    classInstance.props = nextProps;
+  }
+
   classInstance.state = nextState;
-  classInstance.forceUpdate();
+
+  willUpdate && classInstance.forceUpdate();
 }
 
 // 子类继承父类的时候， 父类的静态属性 也是可以继承的
@@ -80,6 +97,9 @@ class Component {
     let newRenderVDom = this.render(); // 生成新的虚拟 dom
     compateTwoVdom(oldDom.parentNode, oldRenderVdom, newRenderVDom);
     this.oldRenderVdom = newRenderVDom; // 记录新的 虚拟dom
+    if (this.componentDidUpdate) {
+      this.componentDidUpdate(this.props, this.state);
+    }
   }
 }
 
