@@ -1,5 +1,6 @@
 import { wrapToVdom } from "./utils";
 import Component from "./Component";
+import { REACT_FORWARD_REF, REACT_ELEMENT } from "./constants";
 /**
  *
  * @param {*} type 元素的 类型 span div p
@@ -26,17 +27,25 @@ function createElement(type, config, children) {
   } else {
     props.children = wrapToVdom(children);
   }
-  return { type, ref, key, props };
+  return { $$type: REACT_ELEMENT, type, ref, key, props };
 }
 
 function createRef() {
   return { current: null };
 }
 
+function forwardRef(render) {
+  return {
+    $$type: REACT_FORWARD_REF,
+    render,
+  };
+}
+
 const React = {
   createElement,
   Component,
   createRef,
+  forwardRef,
 };
 
 export default React;

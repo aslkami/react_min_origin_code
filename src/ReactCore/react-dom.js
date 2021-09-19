@@ -1,4 +1,4 @@
-import { REACT_TEXT } from "./constants";
+import { REACT_TEXT, REACT_FORWARD_REF } from "./constants";
 import { addEvent } from "./event";
 /**
  * 把 虚拟 dom 变成 真实 dom 插入 容器
@@ -24,8 +24,10 @@ export function createDom(vdom) {
   if (!vdom) return null;
   let { type, props, ref } = vdom;
   let dom; // 真实 dom
-
-  if (type === REACT_TEXT) {
+  console.log(vdom);
+  if (type && type.$$type === REACT_FORWARD_REF) {
+    return mountForwardComponent(vdom);
+  } else if (type === REACT_TEXT) {
     // 文本节点
     dom = document.createTextNode(props.content);
   } else if (typeof type === "function") {
@@ -57,6 +59,13 @@ export function createDom(vdom) {
     ref.current = dom;
   }
   return dom;
+}
+
+function mountForwardComponent(vdom) {
+  let { type, props, ref } = vdom;
+  let renderVdom = type.render(props, ref);
+  vdom.oldRenderVdom = renderVdom; // 记录上一次函数返回值
+  return createDom(renderVdom);
 }
 
 function mountClassComponent(vdom) {
