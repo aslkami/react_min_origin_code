@@ -80,6 +80,7 @@ function mountClassComponent(vdom) {
   if (classInstance.componentWillMount) {
     classInstance.componentWillMount();
   }
+  vdom.classInstance = classInstance; // 类组件实例挂在 对应 的 vdom 上
   let renderVdom = classInstance.render();
   classInstance.oldRenderVdom = vdom.oldRenderVdom = renderVdom; // 记录上一次函数返回值
   const dom = createDom(renderVdom);
@@ -132,14 +133,153 @@ export function findDom(vdom) {
     return vdom.dom;
   } else {
     // 函数 类组件没有 真实 dom 但是有虚拟 oldRenderVdom
-    return findDom(vdom);
+    let renderVdom = vdom.classInstance
+      ? vdom.classInstance.oldRenderVdom
+      : vdom.oldRenderVdom;
+    return findDom(renderVdom);
   }
 }
 
-export function compateTwoVdom(parentDom, oldVDom, newVdom) {
-  let oldDom = findDom(oldVDom); // 获取 oldRenderVdom 对应的 真实 dom
-  let newDom = createDom(newVdom); // 创建 新的 dom
-  parentDom.replaceChild(newDom, oldDom);
+// export function compateTwoVdom(parentDom, oldVDom, newVdom) {
+//   let oldDom = findDom(oldVDom); // 获取 oldRenderVdom 对应的 真实 dom
+//   let newDom = createDom(newVdom); // 创建 新的 dom
+//   parentDom.replaceChild(newDom, oldDom);
+// }
+
+// dom-diff
+export function compateTwoVdom(parentDom, oldVDom, newVdom, nextDom) {
+  // 都为
+  if (!oldVDom && !newVdom) {
+    return null;
+  } else if (!!oldVDom && !newVdom) {
+    // 老的有， 新的没有
+    umMountVdom(oldVDom);
+  } else if (!oldVDom && !!newVdom) {
+    // 老的没有， 新的有
+    let newDom = createDom(newVdom);
+    if (nextDom) {
+      //  有可能在中间
+      parentDom.insertBefore(newDom, nextDom);
+    } else {
+      parentDom.appendChild(newDom);
+    }
+
+    if (newDom._componentDidMount) {
+      newDom._componentDidMount();
+    }
+  } else if (!!oldVDom && !!newVdom && oldVDom.type !== newVdom.type) {
+    // 老的有 新的也有， 但是 类型不同
+    umMountVdom(oldVDom);
+    let newDom = createDom(newVdom);
+    if (nextDom) {
+      //  有可能在中间
+      parentDom.insertBefore(newDom, nextDom);
+    } else {
+      parentDom.appendChild(newDom);
+    }
+    if (newDom._componentDidMount) {
+      newDom._componentDidMount();
+    }
+  } else {
+    // 老的有 新的也有， 类型相同， 深度对比子节点的流程
+    updateElemet(oldVDom, newVdom);
+  }
+}
+
+function umMountVdom(vdom) {
+  let { props, ref } = vdom;
+  let currentDom = findDom(vdom); // 获取 虚拟组件 对应的 真实 dom
+  // vdom 可能是 原生组件 span 类组件 也可能是 函数组件
+  if (vdom.classInstance && vdom.classInstance.componentWillUnmount) {
+    vdom.classInstance.componentWillUnmount();
+  }
+  if (ref) {
+    vdom.ref.current = null;
+  }
+  // 取消监听函数
+  Object.keys(props).forEach((propName) => {
+    if (propName.slice(0, 2) === "on") {
+      delete currentDom._store;
+      // 事件绑定在 真实 dom 上 这么写
+      const eventName = propName.slice(2).toLowerCase();
+      currentDom.removeEventListener(eventName, props[propName]);
+    }
+  });
+  // 递归卸载子组件
+  if (props.children) {
+    let children = Array.isArray(props.children)
+      ? props.children
+      : [props.children];
+    children.forEach(umMountVdom);
+  }
+  // 卸载完子组件 卸载自身
+  currentDom.parentNode.removeChild(currentDom);
+}
+
+function updateElemet(oldVDom, newVdom) {
+  if (oldVDom.type === REACT_TEXT) {
+    // 如果新老节点都是 纯文本节点
+    if (oldVDom.props.content !== newVdom.props.content) {
+      let currentDom = (newVdom.dom = findDom(oldVDom));
+      currentDom.textContent = newVdom.props.content;
+    }
+  } else if (typeof oldVDom.type === "string") {
+    // span, div 且类型一样，服用 老的 dom 节点
+    let currentDom = (newVdom.dom = findDom(oldVDom));
+    updateProps(currentDom, oldVDom.props, newVdom.props);
+    updateChildren(currentDom, oldVDom.props.children, newVdom.props.children);
+  } else if (typeof oldVDom.type === "function") {
+    if (oldVDom.type.isReactComponent) {
+      updateClassComponent(oldVDom, newVdom);
+    } else {
+      updateFunctionComponent(oldVDom, newVdom);
+    }
+  }
+}
+
+function updateChildren(parentDom, oldVChildren, newVChildren) {
+  oldVChildren = Array.isArray(oldVChildren)
+    ? oldVChildren
+    : oldVChildren
+    ? [oldVChildren]
+    : [];
+  newVChildren = Array.isArray(newVChildren)
+    ? newVChildren
+    : newVChildren
+    ? [newVChildren]
+    : [];
+
+  let maxChildrenLength = Math.max(oldVChildren.length, newVChildren.length);
+  for (let i = 0; i < maxChildrenLength; i++) {
+    // 试图取出当前的节点的 下一个， 最近的弟弟真实 DOM 节点
+    let nextVdom = oldVChildren.find(
+      (item, index) => index > i && item && findDom(item)
+    );
+    compateTwoVdom(
+      parentDom,
+      oldVChildren[i],
+      newVChildren[i],
+      findDom(nextVdom)
+    );
+  }
+}
+
+function updateClassComponent(oldVDom, newVdom) {
+  let classInstance = (newVdom.classInstance = oldVDom.classInstance);
+  let oldRenderVdom = (newVdom.oldRenderVdom = oldVDom.oldRenderVdom);
+  if (classInstance.componentWillReceiveProps) {
+    classInstance.componentWillReceiveProps(newVdom.props);
+  }
+  classInstance.updater.emitUpdate(newVdom.props);
+}
+
+function updateFunctionComponent(oldVDom, newVdom) {
+  let currentDom = findDom(oldVDom);
+  let parentDom = currentDom.parentNode;
+  let { type, props } = newVdom;
+  let newRenderVdom = type(props);
+  compateTwoVdom(parentDom, oldVDom.oldRenderVdom, newRenderVdom);
+  oldVDom.oldRenderVdom = newRenderVdom;
 }
 
 const ReactDom = {
