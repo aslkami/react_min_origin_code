@@ -86,8 +86,8 @@ class Component {
     this.updater = new Updater(this);
   }
 
-  setState(oartialState) {
-    this.updater.addState(oartialState);
+  setState(partialState) {
+    this.updater.addState(partialState);
   }
 
   // 根据新属性状态，计算新的要渲染的 虚拟 dom

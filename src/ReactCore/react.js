@@ -1,6 +1,6 @@
 import { wrapToVdom } from "./utils";
 import Component from "./Component";
-import { REACT_FORWARD_REF, REACT_ELEMENT } from "./constants";
+import { REACT_FORWARD_REF, REACT_ELEMENT, REACT_FRAGMENT } from "./constants";
 /**
  *
  * @param {*} type 元素的 类型 span div p
@@ -46,6 +46,7 @@ const React = {
   Component,
   createRef,
   forwardRef,
+  Fragment: REACT_FRAGMENT,
 };
 
 export default React;

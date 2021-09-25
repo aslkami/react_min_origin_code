@@ -22,6 +22,11 @@
 
 - createHashHistory 和 createBrowserHistory
 
-  - 通过监听 hashChange 和 popState 获得最新的 history 信息
+  - 通过监听 hashChange 和 popchange 获得最新的 history 信息
   - hashHistory 无法 pushState 传递参数
   - window 没有 onpushstate 的监听事件， 可以 通过 自定义事件 customEvent 模拟
+
+- Link 组件， 里面就是 根据 Provider 提供的 props，依附于 a 标签，组织默认事件 并调用 history api 跳转
+- Switch 组件，优先返回 匹配到的结果， 然后 React.clone 这个子路由
+- Route 组件，根据 props 匹配 url 路径，返回对应的 组件
+- Redirect 组件，内部返回组件，在组件 didmount 的时候 跳转至 指定的 to 路径
