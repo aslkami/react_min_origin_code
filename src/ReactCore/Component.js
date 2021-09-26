@@ -58,14 +58,17 @@ class Updater {
 
 function shouldUpdate(classInstance, nextProps, nextState) {
   let willUpdate = true; // 组件是否需要更新
-  const { shouldComponentUpdate, componentWillUpdate } = classInstance;
+  // const { shouldComponentUpdate, componentWillUpdate } = classInstance;
 
-  if (shouldComponentUpdate && !shouldComponentUpdate(nextProps, nextState)) {
+  if (
+    classInstance.shouldComponentUpdate &&
+    !classInstance.shouldComponentUpdate(nextProps, nextState)
+  ) {
     willUpdate = false;
   }
 
-  if (willUpdate && componentWillUpdate) {
-    componentWillUpdate();
+  if (willUpdate && classInstance.componentWillUpdate) {
+    classInstance.componentWillUpdate();
   }
 
   if (nextProps) {

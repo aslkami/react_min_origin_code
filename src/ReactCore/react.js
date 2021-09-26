@@ -1,4 +1,4 @@
-import { wrapToVdom } from "./utils";
+import { shallowEquals, wrapToVdom } from "./utils";
 import Component from "./Component";
 import {
   REACT_FORWARD_REF,
@@ -6,6 +6,7 @@ import {
   REACT_FRAGMENT,
   REACT_CONTEXT,
   REACT_PROVIDER,
+  REACT_MEMO,
 } from "./constants";
 /**
  *
@@ -65,6 +66,25 @@ function createContext() {
   return context;
 }
 
+class PureComponent extends Component {
+  shouldComponentUpdate(nextProps, nextState) {
+    console.log(this);
+    //只要属性和状态对象，有任意一个属性变了，就会进行更新。如果全相等，才不更新
+    return (
+      !shallowEquals(this.props, nextProps) ||
+      !shallowEquals(this.state, nextState)
+    );
+  }
+}
+
+function memo(type, compare = shallowEquals) {
+  return {
+    $$typeof: REACT_MEMO,
+    type, //函数组件
+    compare,
+  };
+}
+
 const React = {
   createElement,
   Component,
@@ -72,6 +92,8 @@ const React = {
   forwardRef,
   Fragment: REACT_FRAGMENT,
   createContext,
+  PureComponent,
+  memo,
 };
 
 export default React;

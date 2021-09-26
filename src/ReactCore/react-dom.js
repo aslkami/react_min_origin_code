@@ -7,6 +7,7 @@ import {
   DELETE,
   REACT_PROVIDER,
   REACT_CONTEXT,
+  REACT_MEMO,
 } from "./constants";
 import { addEvent } from "./event";
 /**
@@ -36,8 +37,9 @@ export function createDom(vdom) {
   if (!vdom) return null;
   let { type, props, ref } = vdom;
   let dom; // 真实 dom
-
-  if (type && type.$$typeof === REACT_PROVIDER) {
+  if (type && type.$$typeof === REACT_MEMO) {
+    return mountMemo(vdom);
+  } else if (type && type.$$typeof === REACT_PROVIDER) {
     return mountProvider(vdom);
   } else if (type && type.$$typeof === REACT_CONTEXT) {
     return mountContext(vdom);
@@ -78,6 +80,15 @@ export function createDom(vdom) {
     ref.current = dom;
   }
   return dom;
+}
+
+function mountMemo(vdom) {
+  //type = {$$typeof:REACT_MEMO,type,//函数组件compare}
+  let { type, props } = vdom; // type.type 函数组件
+  let renderVdom = type.type(props);
+  vdom.prevProps = props; //在vdom记录上一次的属性对象
+  vdom.oldRenderVdom = renderVdom; //findDOM的时候用的
+  return createDom(renderVdom);
 }
 
 function mountProvider(vdom) {
@@ -265,7 +276,9 @@ function umMountVdom(vdom) {
 }
 
 function updateElement(oldVDom, newVdom) {
-  if (oldVDom.type.$$typeof === REACT_PROVIDER) {
+  if (oldVDom.type.$$typeof === REACT_MEMO) {
+    updateMemo(oldVDom, newVdom);
+  } else if (oldVDom.type.$$typeof === REACT_PROVIDER) {
     updateProvider(oldVDom, newVdom);
   } else if (oldVDom.type.$$typeof === REACT_CONTEXT) {
     updateContext(oldVDom, newVdom);
@@ -291,6 +304,21 @@ function updateElement(oldVDom, newVdom) {
       updateFunctionComponent(oldVDom, newVdom);
     }
   }
+}
+
+function updateMemo(oldVDom, newVdom) {
+  let { type, prevProps } = oldVDom;
+  //比较结果是相等,就不需要重新渲染 render
+  let renderVdom = oldVDom.oldRenderVdom;
+  if (!type.compare(prevProps, newVdom.props)) {
+    let currentDOM = findDom(oldVDom);
+    let parentDOM = currentDOM.parentNode;
+    let { type, props } = newVdom;
+    renderVdom = type.type(props);
+    compateTwoVdom(parentDOM, oldVDom.oldRenderVdom, renderVdom);
+  }
+  newVdom.prevProps = newVdom.props;
+  newVdom.oldRenderVdom = renderVdom;
 }
 
 function updateProvider(oldVDom, newVdom) {
