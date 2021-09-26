@@ -92,7 +92,8 @@ function mountClassComponent(vdom) {
   }
   vdom.classInstance = classInstance; // 类组件实例挂在 对应 的 vdom 上
   let renderVdom = classInstance.render();
-  classInstance.oldRenderVdom = vdom.oldRenderVdom = renderVdom; // 记录上一次函数返回值
+  // classInstance.oldRenderVdom = vdom.oldRenderVdom = renderVdom; // 记录上一次函数返回值
+  classInstance.oldRenderVdom = renderVdom; // 记录上一次函数返回值
   const dom = createDom(renderVdom);
   if (classInstance.componentDidMount) {
     dom._componentDidMount =
@@ -136,6 +137,12 @@ function updateProps(dom, oldProps, newProps) {
       addEvent(dom, key.toLocaleLowerCase(), newProps[key]);
     } else {
       dom[key] = newProps[key];
+    }
+  }
+
+  for (let key in oldProps) {
+    if (!newProps.hasOwnProperty(key)) {
+      dom[key] = null;
     }
   }
 }
@@ -195,7 +202,7 @@ export function compateTwoVdom(parentDom, oldVDom, newVdom, nextDom) {
     }
   } else {
     // 老的有 新的也有， 类型相同， 深度对比子节点的流程
-    updateElemet(oldVDom, newVdom);
+    updateElement(oldVDom, newVdom);
   }
 }
 
@@ -229,11 +236,11 @@ function umMountVdom(vdom) {
   currentDom.parentNode.removeChild(currentDom);
 }
 
-function updateElemet(oldVDom, newVdom) {
-  if (oldVDom.type === REACT_TEXT) {
+function updateElement(oldVDom, newVdom) {
+  if (oldVDom.type === REACT_TEXT && newVdom.type === REACT_TEXT) {
+    let currentDom = (newVdom.dom = findDom(oldVDom));
     // 如果新老节点都是 纯文本节点
     if (oldVDom.props.content !== newVdom.props.content) {
-      let currentDom = (newVdom.dom = findDom(oldVDom));
       currentDom.textContent = newVdom.props.content;
     }
   } else if (oldVDom.type === REACT_FRAGMENT) {
@@ -253,6 +260,34 @@ function updateElemet(oldVDom, newVdom) {
   }
 }
 
+// function updateChildren(parentDom, oldVChildren, newVChildren) {
+//   oldVChildren = Array.isArray(oldVChildren)
+//     ? oldVChildren
+//     : oldVChildren
+//     ? [oldVChildren]
+//     : [];
+//   newVChildren = Array.isArray(newVChildren)
+//     ? newVChildren
+//     : newVChildren
+//     ? [newVChildren]
+//     : [];
+
+//   // 简单的一一对比
+//   let maxChildrenLength = Math.max(oldVChildren.length, newVChildren.length);
+//   for (let i = 0; i < maxChildrenLength; i++) {
+//     // 试图取出当前的节点的 下一个， 最近的弟弟真实 DOM 节点
+//     let nextVdom = oldVChildren.find(
+//       (item, index) => index > i && item && findDom(item)
+//     );
+//     compateTwoVdom(
+//       parentDom,
+//       oldVChildren[i],
+//       newVChildren[i],
+//       findDom(nextVdom)
+//     );
+//   }
+// }
+
 /**
  * dom-diff 算法
  * @param {*} parentDom
@@ -260,6 +295,7 @@ function updateElemet(oldVDom, newVdom) {
  * @param {*} newVChildren
  */
 function updateChildren(parentDom, oldVChildren, newVChildren) {
+  console.log(newVChildren);
   oldVChildren = Array.isArray(oldVChildren)
     ? oldVChildren
     : oldVChildren
@@ -288,7 +324,7 @@ function updateChildren(parentDom, oldVChildren, newVChildren) {
     if (oldVChild) {
       // 找到了的话，按理应该在此判断 类型， 省略
       // 先执行更新虚拟 dom 元素， 在 React 15 里 Dom 更新 和 dom-diff 是一起进行的
-      updateElemet(oldVChild, newVChild);
+      updateElement(oldVChild, newVChild);
       if (oldVChild._mountIndex < lastPlacedIndex) {
         patch.push({
           type: MOVE,

@@ -94,11 +94,26 @@ class Component {
   forceUpdate() {
     let oldRenderVdom = this.oldRenderVdom;
     let oldDom = findDom(oldRenderVdom); // 获取 oldRenderVdom 对应的 真实 dom
+    if (this.constructor.getDerivedStateFromProps) {
+      let newState = this.constructor.getDerivedStateFromProps(
+        this.props,
+        this.state
+      );
+      if (newState) {
+        this.state = newState;
+      }
+    }
+
+    let snapshot;
+    if (this.getSnapshotBeforeUpdate) {
+      snapshot = this.getSnapshotBeforeUpdate();
+    }
+
     let newRenderVDom = this.render(); // 生成新的虚拟 dom
     compateTwoVdom(oldDom.parentNode, oldRenderVdom, newRenderVDom);
     this.oldRenderVdom = newRenderVDom; // 记录新的 虚拟dom
     if (this.componentDidUpdate) {
-      this.componentDidUpdate(this.props, this.state);
+      this.componentDidUpdate(this.props, this.state, snapshot);
     }
   }
 }
