@@ -5,6 +5,8 @@ import {
   MOVE,
   PLACEMENT,
   DELETE,
+  REACT_PROVIDER,
+  REACT_CONTEXT,
 } from "./constants";
 import { addEvent } from "./event";
 /**
@@ -35,7 +37,11 @@ export function createDom(vdom) {
   let { type, props, ref } = vdom;
   let dom; // 真实 dom
 
-  if (type && type.$$type === REACT_FORWARD_REF) {
+  if (type && type.$$typeof === REACT_PROVIDER) {
+    return mountProvider(vdom);
+  } else if (type && type.$$typeof === REACT_CONTEXT) {
+    return mountContext(vdom);
+  } else if (type && type.$$typeof === REACT_FORWARD_REF) {
     return mountForwardComponent(vdom);
   } else if (type === REACT_FRAGMENT) {
     dom = document.createDocumentFragment();
@@ -74,6 +80,24 @@ export function createDom(vdom) {
   return dom;
 }
 
+function mountProvider(vdom) {
+  let { type, props, ref } = vdom;
+  let context = type._context;
+  context._currentValue = props.value;
+  let renderVdom = props.children;
+  vdom.oldRenderVdom = renderVdom;
+  return createDom(renderVdom);
+}
+
+function mountContext(vdom) {
+  let { type, props, ref } = vdom;
+  let context = type._context;
+  let currentValue = context._currentValue;
+  let renderVdom = props.children(currentValue);
+  vdom.oldRenderVdom = renderVdom;
+  return createDom(renderVdom);
+}
+
 function mountForwardComponent(vdom) {
   let { type, props, ref } = vdom;
   let renderVdom = type.render(props, ref);
@@ -84,6 +108,10 @@ function mountForwardComponent(vdom) {
 function mountClassComponent(vdom) {
   let { type: ClassComponent, props, ref } = vdom;
   let classInstance = new ClassComponent(props);
+
+  if (ClassComponent.contextType) {
+    classInstance.context = ClassComponent.contextType._currentValue;
+  }
   if (ref) {
     ref.current = classInstance;
   }
@@ -237,6 +265,11 @@ function umMountVdom(vdom) {
 }
 
 function updateElement(oldVDom, newVdom) {
+  if (oldVDom.type.$$typeof === REACT_PROVIDER) {
+    updateProvider(oldVDom, newVdom);
+  } else if (oldVDom.type.$$typeof === REACT_CONTEXT) {
+    updateContext(oldVDom, newVdom);
+  }
   if (oldVDom.type === REACT_TEXT && newVdom.type === REACT_TEXT) {
     let currentDom = (newVdom.dom = findDom(oldVDom));
     // 如果新老节点都是 纯文本节点
@@ -258,6 +291,27 @@ function updateElement(oldVDom, newVdom) {
       updateFunctionComponent(oldVDom, newVdom);
     }
   }
+}
+
+function updateProvider(oldVDom, newVdom) {
+  let currentDom = findDom(oldVDom); // 儿子
+  let parentDom = currentDom.parentNode; // div#root
+  let { type, props } = newVdom; // tyep => { $$typeof, _context }
+  let context = type._context;
+  context._currentValue = props.value;
+  let renderVdom = props.children;
+  compateTwoVdom(parentDom, oldVDom.oldRenderVdom, renderVdom);
+  newVdom.oldRenderVdom = renderVdom;
+}
+
+function updateContext(oldVDom, newVdom) {
+  let currentDom = findDom(oldVDom); // 儿子
+  let parentDom = currentDom.parentNode; // div#root
+  let { type, props } = newVdom; // tyep => { $$typeof, _context }
+  let context = type._context;
+  let renderVdom = props.children(context._currentValue);
+  compateTwoVdom(parentDom, oldVDom.oldRenderVdom, renderVdom);
+  newVdom.oldRenderVdom = renderVdom;
 }
 
 // function updateChildren(parentDom, oldVChildren, newVChildren) {
@@ -295,7 +349,6 @@ function updateElement(oldVDom, newVdom) {
  * @param {*} newVChildren
  */
 function updateChildren(parentDom, oldVChildren, newVChildren) {
-  console.log(newVChildren);
   oldVChildren = Array.isArray(oldVChildren)
     ? oldVChildren
     : oldVChildren

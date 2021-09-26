@@ -1,6 +1,12 @@
 import { wrapToVdom } from "./utils";
 import Component from "./Component";
-import { REACT_FORWARD_REF, REACT_ELEMENT, REACT_FRAGMENT } from "./constants";
+import {
+  REACT_FORWARD_REF,
+  REACT_ELEMENT,
+  REACT_FRAGMENT,
+  REACT_CONTEXT,
+  REACT_PROVIDER,
+} from "./constants";
 /**
  *
  * @param {*} type 元素的 类型 span div p
@@ -27,7 +33,7 @@ function createElement(type, config, children) {
   } else {
     props.children = wrapToVdom(children);
   }
-  return { $$type: REACT_ELEMENT, type, ref, key, props };
+  return { $$typeof: REACT_ELEMENT, type, ref, key, props };
 }
 
 function createRef() {
@@ -36,9 +42,27 @@ function createRef() {
 
 function forwardRef(render) {
   return {
-    $$type: REACT_FORWARD_REF,
+    $$typeof: REACT_FORWARD_REF,
     render,
   };
+}
+
+function createContext() {
+  let context = {
+    $$typeof: REACT_CONTEXT,
+  };
+
+  context.Provider = {
+    $$typeof: REACT_PROVIDER,
+    _context: context,
+  };
+
+  context.Consumer = {
+    $$typeof: REACT_CONTEXT,
+    _context: context,
+  };
+
+  return context;
 }
 
 const React = {
@@ -47,6 +71,7 @@ const React = {
   createRef,
   forwardRef,
   Fragment: REACT_FRAGMENT,
+  createContext,
 };
 
 export default React;

@@ -94,6 +94,11 @@ class Component {
   forceUpdate() {
     let oldRenderVdom = this.oldRenderVdom;
     let oldDom = findDom(oldRenderVdom); // 获取 oldRenderVdom 对应的 真实 dom
+
+    if (this.constructor.contextType) {
+      this.context = this.constructor.contextType._currentValue;
+    }
+
     if (this.constructor.getDerivedStateFromProps) {
       let newState = this.constructor.getDerivedStateFromProps(
         this.props,
