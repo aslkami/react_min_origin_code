@@ -11,20 +11,55 @@ import {
 } from "./constants";
 import { addEvent } from "./event";
 
-let hookState = [];
+let hookStates = [];
 let hookIndex = 0;
 let scheduleUpdate;
 
 // hook 源码时用 链表实现的
 export function useState(initialState) {
-  hookState[hookIndex] = hookState[hookIndex] || initialState;
+  hookStates[hookIndex] = hookStates[hookIndex] || initialState;
   let currenIndex = hookIndex;
   function setState(newState) {
-    hookState[currenIndex] = newState;
+    hookStates[currenIndex] = newState;
     scheduleUpdate();
   }
 
-  return [hookState[hookIndex++], setState];
+  return [hookStates[hookIndex++], setState];
+}
+
+export function useMemo(factory, deps) {
+  if (hookStates[hookIndex]) {
+    let [lastMemo, lastDeps] = hookStates[hookIndex];
+    let same = deps.every((item, index) => item === lastDeps[index]);
+    if (same) {
+      hookIndex++;
+      return lastMemo;
+    } else {
+      let newMemo = factory();
+      hookStates[hookIndex++] = [newMemo, deps];
+      return newMemo;
+    }
+  } else {
+    let newMemo = factory();
+    hookStates[hookIndex++] = [newMemo, deps];
+    return newMemo;
+  }
+}
+export function useCallback(callback, deps) {
+  if (hookStates[hookIndex]) {
+    let [lastCallback, lastDeps] = hookStates[hookIndex];
+    let same = deps.every((item, index) => item === lastDeps[index]);
+    if (same) {
+      hookIndex++;
+      return lastCallback;
+    } else {
+      hookStates[hookIndex++] = [callback, deps];
+      return callback;
+    }
+  } else {
+    hookStates[hookIndex++] = [callback, deps];
+    return callback;
+  }
 }
 
 /**
@@ -521,7 +556,7 @@ function updateFunctionComponent(oldVDom, newVdom) {
   let { type, props } = newVdom;
   let newRenderVdom = type(props);
   compateTwoVdom(parentDom, oldVDom.oldRenderVdom, newRenderVdom);
-  oldVDom.oldRenderVdom = newRenderVdom;
+  newVdom.oldRenderVdom = newRenderVdom;
 }
 
 const ReactDom = {
