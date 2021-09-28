@@ -8,6 +8,8 @@ import {
   REACT_PROVIDER,
   REACT_MEMO,
 } from "./constants";
+
+import { useState } from "./react-dom";
 /**
  *
  * @param {*} type 元素的 类型 span div p
@@ -94,6 +96,7 @@ const React = {
   createContext,
   PureComponent,
   memo,
+  useState,
 };
 
 export default React;

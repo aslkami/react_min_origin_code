@@ -30,3 +30,20 @@
 - Switch 组件，优先返回 匹配到的结果， 然后 React.clone 这个子路由
 - Route 组件，根据 props 匹配 url 路径，返回对应的 组件
 - Redirect 组件，内部返回组件，在组件 didmount 的时候 跳转至 指定的 to 路径
+- NavLink 组件， 原理是 传入 根据 Route children 渲染，无论有没有跳转，目的是为了知道用户的点击态
+- Protected 组件， 原理用的是 renderProps, 用于自定义渲染组件
+- Prompt 组件，在跳转之前询问页面是否需要离开，原理， when 参数 传入 true 的时候， 给予 message 函数参数传入，类似于 renderProps，传入 location 的参数，然后返回 函数 用于 销毁变量，类似于 listener 函数， 用完就销毁
+
+```jsx
+<Prompt
+  when={true}
+  message={(location) => `是否离开当前路径${location.pathname}`}
+>
+let msg = message
+let allow = window.prompt(msg(location))
+if(!allow) return // !allow 选择否 就不跳转了
+```
+
+- withRouter 组件，源码用 Provider ，可用高阶组件实现， 用于非路由组件去 调用 history Api
+- useParams | useLocation | useHistory 都是 利用 Provider 获取 路由信息
+- useRouteMatch 调用 match 返回 对象

@@ -10,6 +10,23 @@ import {
   REACT_MEMO,
 } from "./constants";
 import { addEvent } from "./event";
+
+let hookState = [];
+let hookIndex = 0;
+let scheduleUpdate;
+
+// hook 源码时用 链表实现的
+export function useState(initialState) {
+  hookState[hookIndex] = hookState[hookIndex] || initialState;
+  let currenIndex = hookIndex;
+  function setState(newState) {
+    hookState[currenIndex] = newState;
+    scheduleUpdate();
+  }
+
+  return [hookState[hookIndex++], setState];
+}
+
 /**
  * 把 虚拟 dom 变成 真实 dom 插入 容器
  * @param {*} vdom 虚拟 dom
@@ -17,6 +34,11 @@ import { addEvent } from "./event";
  */
 function render(vdom, container) {
   mount(vdom, container); // hooks 需要用
+  // React 里 更新都是从根节点开始
+  scheduleUpdate = () => {
+    hookIndex = 0;
+    compateTwoVdom(container, vdom, vdom);
+  };
 }
 
 function mount(vdom, parentDom) {

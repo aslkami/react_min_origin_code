@@ -1,45 +1,28 @@
 import React from './ReactCore/react';
-import ReactDOM from './ReactCore/react-dom';
+import ReactDom from './ReactCore/react-dom';
 
 // import React from './react';
 // import ReactDOM from './react-dom';
-class ClassCounter extends React.PureComponent{
-  render(){
-    console.log('ClassCounter render');
-    return <div>ClassCounter:{this.props.count}</div>
+
+
+function Counter() {
+  const [count1, setCount1] = React.useState(0)
+  const [count2, setCount2] = React.useState(0)
+
+  const handleClick = () => {
+    setCount1(count1 + 1)
+    setCount2(count2 + 1)
   }
+
+  return (
+    <div>
+      <p>{count1}</p>
+      <p>{count2}</p>
+      <p><button onClick={handleClick}>++++++++</button></p>
+    </div>
+  )
 }
-function FunctionCounter(props){
-  console.log('FunctionCounter render');
-  return <div>FunctionCounter:{props.count}</div>
-}
-const MemoFunctionCounter = React.memo(FunctionCounter);
-console.log(MemoFunctionCounter);
-class App extends React.Component{
-  state = {number:0}
-  amountRef = React.createRef()
-  handleClick = ()=>{
-    let nextNumber = this.state.number + (parseInt(this.amountRef.current.value));
-    this.setState({
-      number:nextNumber
-    });
-  }
-  render(){
-    return (
-      <div>
-        <ClassCounter count={this.state.number}/>
-        <MemoFunctionCounter  count={this.state.number}/>
-        <input ref={this.amountRef}/>
-        <button onClick={this.handleClick}>+</button>
-      </div>
-    )
-  }
-}
-ReactDOM.render(<App/>, document.getElementById('root'));
-/**
-{
-  $$typeof: Symbol(react.memo)，
-  compare: null,
-  type: ƒ FunctionCounter(props)
-}
- */
+
+
+const App = <Counter></Counter>
+ReactDom.render(App, window.root)
