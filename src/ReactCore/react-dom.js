@@ -62,6 +62,18 @@ export function useCallback(callback, deps) {
   }
 }
 
+export function useReducer(reducer, initialState) {
+  hookStates[hookIndex] = hookStates[hookIndex] || initialState;
+  let currentIndex = hookIndex;
+  function dispatch(action) {
+    hookStates[currentIndex] = reducer
+      ? reducer(hookStates[currentIndex], action)
+      : action;
+    scheduleUpdate();
+  }
+  return [hookStates[hookIndex++], dispatch];
+}
+
 /**
  * 把 虚拟 dom 变成 真实 dom 插入 容器
  * @param {*} vdom 虚拟 dom

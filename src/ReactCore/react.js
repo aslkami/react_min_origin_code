@@ -9,7 +9,7 @@ import {
   REACT_MEMO,
 } from "./constants";
 
-import { useState, useCallback, useMemo } from "./react-dom";
+import { useState, useCallback, useMemo, useReducer } from "./react-dom";
 /**
  *
  * @param {*} type 元素的 类型 span div p
@@ -99,6 +99,7 @@ const React = {
   useState,
   useCallback,
   useMemo,
+  useReducer,
 };
 
 export default React;

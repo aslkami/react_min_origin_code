@@ -5,39 +5,26 @@ import ReactDom from './ReactCore/react-dom';
 // import ReactDom from 'react-dom';
 
 
-function Child(props) {
-  console.log("Child Render");
-  return <button onClick={props.handleClick}>{props.data.count}</button>
+function reducer(state={number:0}, action) {
+  switch (action.type) {
+    case 'ADD':
+      return {number: state.number + 1};
+    case 'MINUS':
+      return {number: state.number - 1};
+    default:
+      return state;
+  }
 }
 
-const ReactMemoChild = React.memo(Child)
-
-function Counter() {
-  console.log('Parent Render');
-  const [count, setCount] = React.useState(0)
-  const [value, setValue] = React.useState('')
-
-  // let data = {
-  //   count
-  // }
-
-  // let handleClick = () => setCount(count + 1)
-  let data = React.useMemo(() => {
-    return {
-      count
-    }
-  }, [count])
-
-  let handleClick = React.useCallback(() => {
-    setCount(count + 1)
-  }, [count])
-
-  return (
-    <div className="parent">
-      <input value={value} onChange={e => setValue(e.target.value)} />
-      <ReactMemoChild data={data} handleClick={handleClick}/>
-    </div>
-  )
+function Counter(){
+    const [state, dispatch] = React.useReducer(reducer,{number:0});
+    return (
+        <div>
+          Count: {state.number}
+          <button onClick={() => dispatch({type: 'ADD'})}>+</button>
+          <button onClick={() => dispatch({type: 'MINUS'})}>-</button>
+        </div>
+    )
 }
 
 
