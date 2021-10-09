@@ -9,7 +9,15 @@ import {
   REACT_MEMO,
 } from "./constants";
 
-import { useState, useCallback, useMemo, useReducer } from "./react-dom";
+import {
+  useState,
+  useCallback,
+  useMemo,
+  useReducer,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+} from "./react-dom";
 /**
  *
  * @param {*} type 元素的 类型 span div p
@@ -87,6 +95,14 @@ function memo(type, compare = shallowEquals) {
   };
 }
 
+function useContext(context) {
+  return context._currentValue;
+}
+
+export function useImperativeHandle(ref, handler) {
+  ref.current = handler();
+}
+
 const React = {
   createElement,
   Component,
@@ -100,6 +116,11 @@ const React = {
   useCallback,
   useMemo,
   useReducer,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+  useContext,
+  useImperativeHandle,
 };
 
 export default React;

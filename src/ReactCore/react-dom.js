@@ -16,14 +16,26 @@ let hookIndex = 0;
 let scheduleUpdate;
 
 // hook 源码时用 链表实现的
+// export function useState(initialState) {
+//   hookStates[hookIndex] = hookStates[hookIndex] || initialState;
+//   let currenIndex = hookIndex;
+//   function setState(newState) {
+//     hookStates[currenIndex] = newState;
+//     scheduleUpdate();
+//   }
+
+//   return [hookStates[hookIndex++], setState];
+// }
+
 export function useState(initialState) {
   hookStates[hookIndex] = hookStates[hookIndex] || initialState;
-  let currenIndex = hookIndex;
+  let currentIndex = hookIndex;
   function setState(newState) {
-    hookStates[currenIndex] = newState;
+    if (typeof newState === "function")
+      newState = newState(hookStates[currentIndex]);
+    hookStates[currentIndex] = newState;
     scheduleUpdate();
   }
-
   return [hookStates[hookIndex++], setState];
 }
 
@@ -72,6 +84,59 @@ export function useReducer(reducer, initialState) {
     scheduleUpdate();
   }
   return [hookStates[hookIndex++], dispatch];
+}
+
+export function useEffect(effect, deps) {
+  //先判断是不是初次渲染
+  if (hookStates[hookIndex]) {
+    let [lastDestroy, lastDeps] = hookStates[hookIndex];
+    let same = deps && deps.every((item, index) => item === lastDeps[index]);
+    if (same) {
+      hookIndex++;
+    } else {
+      //如果有任何一个值不一样，则执行上一个销毁函数
+      lastDestroy && lastDestroy();
+      //开启一个新的宏任务
+      setTimeout(() => {
+        let destroy = effect();
+        hookStates[hookIndex++] = [destroy, deps];
+      });
+    }
+  } else {
+    //如果是第一次执行执行到此
+    setTimeout(() => {
+      let destroy = effect();
+      hookStates[hookIndex++] = [destroy, deps];
+    });
+  }
+}
+export function useLayoutEffect(effect, deps) {
+  //先判断是不是初次渲染
+  if (hookStates[hookIndex]) {
+    let [lastDestroy, lastDeps] = hookStates[hookIndex];
+    let same = deps && deps.every((item, index) => item === lastDeps[index]);
+    if (same) {
+      hookIndex++;
+    } else {
+      //如果有任何一个值不一样，则执行上一个销毁函数
+      lastDestroy && lastDestroy();
+      //开启一个新的宏任务
+      queueMicrotask(() => {
+        let destroy = effect();
+        hookStates[hookIndex++] = [destroy, deps];
+      });
+    }
+  } else {
+    //如果是第一次执行执行到此
+    queueMicrotask(() => {
+      let destroy = effect();
+      hookStates[hookIndex++] = [destroy, deps];
+    });
+  }
+}
+export function useRef(initialState) {
+  hookStates[hookIndex] = hookStates[hookIndex] || { current: initialState }; //hookStates[0]=10
+  return hookStates[hookIndex++];
 }
 
 /**
