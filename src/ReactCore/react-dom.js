@@ -252,11 +252,12 @@ function mountForwardComponent(vdom) {
 
 function mountClassComponent(vdom) {
   let { type: ClassComponent, props, ref } = vdom;
-  let classInstance = new ClassComponent(props);
-
-  if (ClassComponent.contextType) {
-    classInstance.context = ClassComponent.contextType._currentValue;
-  }
+  let context = ClassComponent.contextType._currentValue ?? undefined;
+  let classInstance = new ClassComponent(props, context);
+  classInstance.context = context;
+  // if (ClassComponent.contextType) {
+  //   classInstance.context = ClassComponent.contextType._currentValue;
+  // }
   if (ref) {
     ref.current = classInstance;
   }
